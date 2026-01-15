@@ -1,0 +1,455 @@
+-- script create BY ghost
+
+-- Carrega WindUI
+local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
+
+-- Cria a janela principal
+local Window = WindUI:CreateWindow({
+    Title = "Painel Admin",
+    Author = "ghost",
+    Icon = "ghost",
+    Folder = "GhostHub",
+    Theme = "Dark",
+    Size = UDim2.fromOffset(460, 460),
+    Transparent = true,
+    Resizable = true,
+    SideBarWidth = 180,
+})
+
+-- Cria abas
+local UserTab = Window:Tab({Title = "User", Icon = "user"})
+
+-- script create BY ghost
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
+local TargetPlayer = nil
+local ViewEnabled = false
+
+-- Buscar jogador (por nome parcial, minúsculo)
+local function findPlayerByName(name)
+	name = name:lower()
+	for _, plr in ipairs(Players:GetPlayers()) do
+		if plr.Name:lower():sub(1, #name) == name then
+			return plr
+		end
+	end
+	return nil
+end
+
+-- Gerar prefixo do alvo (3 letras minúsculas)
+local function getTargetPrefix()
+	if TargetPlayer then
+		return string.sub(TargetPlayer.Name:lower(), 1, 3)
+	else
+		return nil
+	end
+end
+
+-- INPUT BOX para definir o alvo
+UserTab:Input({
+	Title = "Selecionar Jogador",
+	Placeholder = "Digite o nome ou início do nome...",
+	Callback = function(text)
+		local found = findPlayerByName(text)
+		if found then
+			TargetPlayer = found
+			WindUI:Notify({
+				Title = "Jogador Selecionado",
+				Content = "Alvo definido: " .. TargetPlayer.Name,
+				Duration = 3,
+				Icon = "user-check"
+			})
+		else
+			WindUI:Notify({
+				Title = "Não encontrado",
+				Content = "Nenhum jogador com esse nome.",
+				Duration = 3,
+				Icon = "x-circle"
+			})
+		end
+	end
+})
+
+-- TOGGLE: View Alvo
+UserTab:Toggle({
+	Title = "View Alvo",
+	Desc = "Ativa visão no jogador selecionado",
+	Icon = "eye",
+	Type = "Checkbox",
+	Value = false,
+	Callback = function(state)
+		ViewEnabled = state
+		if state then
+			if TargetPlayer and TargetPlayer.Character and TargetPlayer.Character:FindFirstChildWhichIsA("Humanoid") then
+				Camera.CameraSubject = TargetPlayer.Character:FindFirstChildWhichIsA("Humanoid")
+			else
+				WindUI:Notify({
+					Title = "Erro",
+					Content = "Nenhum alvo válido selecionado.",
+					Duration = 3,
+					Icon = "alert-triangle"
+				})
+			end
+		else
+			Camera.CameraSubject = LocalPlayer.Character:FindFirstChildWhichIsA("Humanoid")
+		end
+	end
+})
+
+-- BOTÃO: Teleporte (move o player para frente do alvo)
+UserTab:Button({
+	Title = "Teleporte",
+	Callback = function()
+		if TargetPlayer 
+		and TargetPlayer.Character 
+		and TargetPlayer.Character:FindFirstChild("HumanoidRootPart") 
+		and LocalPlayer.Character 
+		and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+
+			local targetRoot = TargetPlayer.Character.HumanoidRootPart
+			local localRoot = LocalPlayer.Character.HumanoidRootPart
+
+			-- Calcula posição 3 studs à frente do alvo
+			local newPos = targetRoot.Position + targetRoot.CFrame.LookVector * 3
+			localRoot.CFrame = CFrame.new(newPos, targetRoot.Position)
+
+			WindUI:Notify({
+				Title = "Teleporte",
+				Content = "Você foi para frente de " .. TargetPlayer.Name,
+				Duration = 3,
+				Icon = "navigation"
+			})
+		else
+			WindUI:Notify({
+				Title = "Erro",
+				Content = "Nenhum alvo válido selecionado.",
+				Duration = 3,
+				Icon = "alert-triangle"
+			})
+		end
+	end
+})
+
+
+
+
+-- script create BY ghost
+
+local Players = game:GetService("Players")
+local TextChatService = game:GetService("TextChatService")
+
+-- Envia mensagem no chat
+local function sendChatMessage(message)
+	if TextChatService.ChatInputBarConfiguration
+	and TextChatService.ChatInputBarConfiguration.TargetTextChannel then
+		local canal = TextChatService.ChatInputBarConfiguration.TargetTextChannel
+		canal:SendAsync(message)
+	end
+end
+
+-- Mostra notificação somente se detectar algo
+local function showFound(plr)
+	WindUI:Notify({
+		Title = "Found",
+		Content = "User identificado: " .. plr.Name,
+		Duration = 5,
+		Icon = "alert-triangle"
+	})
+end
+
+-- Verifica mensagens no chat
+local function checkMessage(plr, msg)
+	local lowerMsg = msg:lower()
+	if lowerMsg:find("havens_") or lowerMsg:find("domer_") then
+		showFound(plr)
+	end
+end
+
+-- Botão principal
+UserTab:Button({
+	Title = "Verificar Usuários",
+	Callback = function()
+		sendChatMessage(";v")
+
+		-- Jogadores atuais
+		for _, plr in ipairs(Players:GetPlayers()) do
+			local name = plr.Name:lower()
+			if name:find("havens_") or name:find("domer_") then
+				showFound(plr)
+			end
+			plr.Chatted:Connect(function(msg)
+				checkMessage(plr, msg)
+			end)
+		end
+
+		-- Jogadores novos
+		Players.PlayerAdded:Connect(function(plr)
+			local name = plr.Name:lower()
+			if name:find("havens_") or name:find("domer_") then
+				showFound(plr)
+			end
+			plr.Chatted:Connect(function(msg)
+				checkMessage(plr, msg)
+			end)
+		end)
+	end
+})
+
+local Section = UserTab:Section({ 
+    Title = "comandos Normais",
+})
+
+UserTab:Button({
+	Title = "bring",
+	Callback = function()
+		local prefix = getTargetPrefix()
+		if prefix then
+			sendChatMessage(";bring " .. prefix)
+		else
+			WindUI:Notify({
+				Title = "Nenhum alvo",
+				Content = "Selecione um jogador primeiro.",
+				Duration = 3,
+				Icon = "alert-triangle"
+			})
+		end
+	end
+})
+
+-- Botão Kill
+UserTab:Button({
+	Title = "Kill",
+	Callback = function()
+		local prefix = getTargetPrefix()
+		if prefix then
+			sendChatMessage(";kill " .. prefix)
+		else
+			WindUI:Notify({
+				Title = "Nenhum alvo",
+				Content = "Selecione um jogador primeiro.",
+				Duration = 3,
+				Icon = "alert-triangle"
+			})
+		end
+	end
+})
+
+-- Botão Freeze
+UserTab:Button({
+	Title = "Freeze",
+	Callback = function()
+		local prefix = getTargetPrefix()
+		if prefix then
+			sendChatMessage(";freeze " .. prefix)
+		else
+			WindUI:Notify({
+				Title = "Nenhum alvo",
+				Content = "Selecione um jogador primeiro.",
+				Duration = 3,
+				Icon = "alert-triangle"
+			})
+		end
+	end
+})
+
+-- Botão Unfreeze
+UserTab:Button({
+	Title = "Unfreeze",
+	Callback = function()
+		local prefix = getTargetPrefix()
+		if prefix then
+			sendChatMessage(";unfreeze " .. prefix)
+		else
+			WindUI:Notify({
+				Title = "Nenhum alvo",
+				Content = "Selecione um jogador primeiro.",
+				Duration = 3,
+				Icon = "alert-triangle"
+			})
+		end
+	end
+})
+
+-- Botão Kick
+UserTab:Button({
+	Title = "Kick",
+	Callback = function()
+		local prefix = getTargetPrefix()
+		if prefix then
+			sendChatMessage(";kick " .. prefix)
+		else
+			WindUI:Notify({
+				Title = "Nenhum alvo",
+				Content = "Selecione um jogador primeiro.",
+				Duration = 3,
+				Icon = "alert-triangle"
+			})
+		end
+	end
+})
+
+-- Botão Fling
+UserTab:Button({
+	Title = "Fling",
+	Callback = function()
+		local prefix = getTargetPrefix()
+		if prefix then
+			sendChatMessage(";fling " .. prefix)
+		else
+			WindUI:Notify({
+				Title = "Nenhum alvo",
+				Content = "Selecione um jogador primeiro.",
+				Duration = 3,
+				Icon = "alert-triangle"
+			})
+		end
+	end
+})
+
+
+local Players = game:GetService("Players")
+local TextChatService = game:GetService("TextChatService")
+local TargetPlayer = TargetPlayer -- usa o mesmo alvo definido no seu script
+local SayMessage = "" -- texto digitado
+
+-- Função para enviar mensagem no chat
+local function sendChatMessage(message)
+	if TextChatService.ChatInputBarConfiguration
+	and TextChatService.ChatInputBarConfiguration.TargetTextChannel then
+		local canal = TextChatService.ChatInputBarConfiguration.TargetTextChannel
+		canal:SendAsync(message)
+	else
+		warn("⚠️ Não foi possível enviar no chat.")
+	end
+end
+
+-- Função para gerar prefixo do alvo
+local function getTargetPrefix()
+	if TargetPlayer then
+		return string.sub(TargetPlayer.Name, 1, 3)
+	else
+		return nil
+	end
+end
+
+local Section = UserTab:Section({ 
+    Title = "Say cmd",
+})
+
+-- InputBox para escrever o texto do say
+UserTab:Input({
+	Title = "Mensagem para Say",
+	Placeholder = "Digite aqui o que o alvo vai dizer...",
+	Callback = function(text)
+		SayMessage = text
+		WindUI:Notify({
+			Title = "Mensagem Definida",
+			Content = "Mensagem salva: " .. text,
+			Duration = 3,
+			Icon = "message-square"
+		})
+	end
+})
+
+-- Botão para enviar o comando ;say
+UserTab:Button({
+	Title = "Enviar Say",
+	Callback = function()
+		local prefix = getTargetPrefix()
+		if prefix and SayMessage ~= "" then
+			sendChatMessage(";say " .. prefix .. " " .. SayMessage)
+			WindUI:Notify({
+				Title = "Comando Enviado",
+				Content = "→ ;say " .. prefix .. " " .. SayMessage,
+				Duration = 4,
+				Icon = "check-circle"
+			})
+		else
+			WindUI:Notify({
+				Title = "Erro",
+				Content = "Defina um alvo e uma mensagem antes de enviar.",
+				Duration = 3,
+				Icon = "alert-triangle"
+			})
+		end
+	end
+})
+
+
+-- script create BY ghost
+
+local Section = UserTab:Section({ 
+    Title = "kick cmd",
+})
+
+local Players = game:GetService("Players")
+local TextChatService = game:GetService("TextChatService")
+local TargetPlayer = TargetPlayer -- usa o mesmo alvo definido no seu script
+local KickReason = "" -- texto do motivo
+
+-- Função para enviar mensagens no chat
+local function sendChatMessage(message)
+	if TextChatService.ChatInputBarConfiguration
+	and TextChatService.ChatInputBarConfiguration.TargetTextChannel then
+		local canal = TextChatService.ChatInputBarConfiguration.TargetTextChannel
+		canal:SendAsync(message)
+	else
+		warn("⚠️ Não foi possível enviar no chat.")
+	end
+end
+
+-- Função para pegar o prefixo (3 primeiras letras do alvo)
+local function getTargetPrefix()
+	if TargetPlayer then
+		return string.sub(TargetPlayer.Name, 1, 3)
+	else
+		return nil
+	end
+end
+
+-- InputBox para escrever o motivo do kick
+UserTab:Input({
+	Title = "Motivo do Kick",
+	Placeholder = "Digite o motivo...",
+	Callback = function(text)
+		KickReason = text
+		WindUI:Notify({
+			Title = "Motivo Definido",
+			Content = "Motivo salvo: " .. text,
+			Duration = 3,
+			Icon = "info"
+		})
+	end
+})
+
+-- Botão para enviar o comando ;kick
+UserTab:Button({
+	Title = "Kick",
+	Callback = function()
+		local prefix = getTargetPrefix()
+		if prefix and KickReason ~= "" then
+			sendChatMessage(";kick " .. prefix .. " " .. KickReason)
+			WindUI:Notify({
+				Title = "Comando Enviado",
+				Content = "→ ;kick " .. prefix .. " " .. KickReason,
+				Duration = 4,
+				Icon = "check-circle"
+			})
+		else
+			WindUI:Notify({
+				Title = "Erro",
+				Content = "Defina um alvo e um motivo antes de enviar.",
+				Duration = 3,
+				Icon = "alert-triangle"
+			})
+		end
+	end
+})
+
+
+
+-- Abre a janela
+Window:Open()
