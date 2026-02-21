@@ -1,455 +1,201 @@
 -- script create BY ghost
-
--- Carrega WindUI
-local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
-
--- Cria a janela principal
-local Window = WindUI:CreateWindow({
-    Title = "Painel Admin",
-    Author = "ghost",
-    Icon = "ghost",
-    Folder = "GhostHub",
-    Theme = "Dark",
-    Size = UDim2.fromOffset(460, 460),
-    Transparent = true,
-    Resizable = true,
-    SideBarWidth = 180,
-})
-
--- Cria abas
-local UserTab = Window:Tab({Title = "User", Icon = "user"})
-
--- script create BY ghost
-
 local Players = game:GetService("Players")
+local TextChatService = game:GetService("TextChatService")
+local TweenService = game:GetService("TweenService")
 local LocalPlayer = Players.LocalPlayer
-local Camera = workspace.CurrentCamera
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
-local TargetPlayer = nil
-local ViewEnabled = false
+--== ENVIO DE MENSAGEM ==--
+local function sendChat(msg)
+	if TextChatService.ChatInputBarConfiguration
+		and TextChatService.ChatInputBarConfiguration.TargetTextChannel then
+		TextChatService.ChatInputBarConfiguration.TargetTextChannel:SendAsync(msg)
+	end
+end
 
--- Buscar jogador (por nome parcial, minúsculo)
-local function findPlayerByName(name)
-	name = name:lower()
+--== GUI PRINCIPAL ==--
+local Screen = Instance.new("ScreenGui", PlayerGui)
+Screen.Name = "GhostAdminPanel"
+Screen.ResetOnSpawn = false
+
+--== BOTÃO ABRIR/FECHAR ==--
+local ToggleBtn = Instance.new("TextButton", Screen)
+ToggleBtn.Size = UDim2.new(0, 120, 0, 40)
+ToggleBtn.Position = UDim2.new(0, 20, 0.5, -20)
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+ToggleBtn.Text = "Abrir Painel"
+ToggleBtn.TextColor3 = Color3.new(1, 1, 1)
+ToggleBtn.Font = Enum.Font.SourceSansBold
+ToggleBtn.TextSize = 22
+ToggleBtn.BorderSizePixel = 0
+ToggleBtn.Active = true
+ToggleBtn.Draggable = true
+Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(0, 8)
+
+local Main = Instance.new("Frame", Screen)
+Main.Size = UDim2.new(0, 400, 0, 300)
+Main.Position = UDim2.new(0, 160, 0.5, -150)
+Main.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+Main.BorderSizePixel = 0
+Main.Visible = false
+Main.Active = true
+Main.Draggable = true
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 10)
+
+-- animação abrir e fechar
+ToggleBtn.MouseButton1Click:Connect(function()
+	local goal = {BackgroundColor3 = Main.Visible and Color3.fromRGB(0,0,0) or Color3.fromRGB(50,50,50)}
+	TweenService:Create(ToggleBtn, TweenInfo.new(0.3, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), goal):Play()
+	if Main.Visible then
+		TweenService:Create(Main, TweenInfo.new(0.25), {Size = UDim2.new(0, 400, 0, 0)}):Play()
+		task.wait(0.25)
+		Main.Visible = false
+		ToggleBtn.Text = "Abrir Painel"
+	else
+		Main.Visible = true
+		Main.Size = UDim2.new(0, 400, 0, 0)
+		TweenService:Create(Main, TweenInfo.new(0.25), {Size = UDim2.new(0, 400, 0, 300)}):Play()
+		ToggleBtn.Text = "Fechar Painel"
+	end
+end)
+
+local Title = Instance.new("TextLabel", Main)
+Title.Size = UDim2.new(1, 0, 0, 30)
+Title.BackgroundTransparency = 1
+Title.Text = "Painel Admin - Ghost"
+Title.Font = Enum.Font.SourceSansBold
+Title.TextSize = 18
+Title.TextColor3 = Color3.new(1, 1, 1)
+
+--== LISTA DE PLAYERS ==--
+local PlayerList = Instance.new("ScrollingFrame", Main)
+PlayerList.Size = UDim2.new(0, 150, 0, 230)
+PlayerList.Position = UDim2.new(0, 10, 0, 36)
+PlayerList.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+PlayerList.BorderSizePixel = 0
+PlayerList.ScrollBarThickness = 6
+Instance.new("UICorner", PlayerList).CornerRadius = UDim.new(0, 6)
+
+local UIList = Instance.new("UIListLayout", PlayerList)
+UIList.Padding = UDim.new(0, 3)
+UIList.SortOrder = Enum.SortOrder.LayoutOrder
+
+local SelectedLabel = Instance.new("TextLabel", Main)
+SelectedLabel.Size = UDim2.new(0, 220, 0, 22)
+SelectedLabel.Position = UDim2.new(0, 170, 0, 36)
+SelectedLabel.BackgroundTransparency = 1
+SelectedLabel.Text = "Alvo: (nenhum)"
+SelectedLabel.Font = Enum.Font.SourceSans
+SelectedLabel.TextSize = 16
+SelectedLabel.TextColor3 = Color3.new(1, 1, 1)
+
+local ReasonBox = Instance.new("TextBox", Main)
+ReasonBox.Size = UDim2.new(0, 220, 0, 28)
+ReasonBox.Position = UDim2.new(0, 170, 0, 66)
+ReasonBox.PlaceholderText = "Motivo (somente Kick e Say)"
+ReasonBox.Text = ""
+ReasonBox.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+ReasonBox.TextColor3 = Color3.new(1, 1, 1)
+ReasonBox.Font = Enum.Font.SourceSans
+ReasonBox.TextSize = 15
+Instance.new("UICorner", ReasonBox).CornerRadius = UDim.new(0, 6)
+
+local CmdFrame = Instance.new("ScrollingFrame", Main)
+CmdFrame.Size = UDim2.new(0, 220, 0, 180)
+CmdFrame.Position = UDim2.new(0, 170, 0, 100)
+CmdFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+CmdFrame.ScrollBarThickness = 6
+CmdFrame.BorderSizePixel = 0
+Instance.new("UICorner", CmdFrame).CornerRadius = UDim.new(0, 6)
+
+local CmdList = Instance.new("UIListLayout", CmdFrame)
+CmdList.Padding = UDim.new(0, 4)
+CmdList.SortOrder = Enum.SortOrder.LayoutOrder
+
+--== ATUALIZAÇÃO DE PLAYERS ==--
+local selected = nil
+local memory = {}
+
+local function updateList()
+	for _, v in ipairs(PlayerList:GetChildren()) do
+		if v:IsA("TextButton") then v:Destroy() end
+	end
 	for _, plr in ipairs(Players:GetPlayers()) do
-		if plr.Name:lower():sub(1, #name) == name then
-			return plr
-		end
-	end
-	return nil
-end
-
--- Gerar prefixo do alvo (3 letras minúsculas)
-local function getTargetPrefix()
-	if TargetPlayer then
-		return string.sub(TargetPlayer.Name:lower(), 1, 3)
-	else
-		return nil
-	end
-end
-
--- INPUT BOX para definir o alvo
-UserTab:Input({
-	Title = "Selecionar Jogador",
-	Placeholder = "Digite o nome ou início do nome...",
-	Callback = function(text)
-		local found = findPlayerByName(text)
-		if found then
-			TargetPlayer = found
-			WindUI:Notify({
-				Title = "Jogador Selecionado",
-				Content = "Alvo definido: " .. TargetPlayer.Name,
-				Duration = 3,
-				Icon = "user-check"
-			})
-		else
-			WindUI:Notify({
-				Title = "Não encontrado",
-				Content = "Nenhum jogador com esse nome.",
-				Duration = 3,
-				Icon = "x-circle"
-			})
-		end
-	end
-})
-
--- TOGGLE: View Alvo
-UserTab:Toggle({
-	Title = "View Alvo",
-	Desc = "Ativa visão no jogador selecionado",
-	Icon = "eye",
-	Type = "Checkbox",
-	Value = false,
-	Callback = function(state)
-		ViewEnabled = state
-		if state then
-			if TargetPlayer and TargetPlayer.Character and TargetPlayer.Character:FindFirstChildWhichIsA("Humanoid") then
-				Camera.CameraSubject = TargetPlayer.Character:FindFirstChildWhichIsA("Humanoid")
-			else
-				WindUI:Notify({
-					Title = "Erro",
-					Content = "Nenhum alvo válido selecionado.",
-					Duration = 3,
-					Icon = "alert-triangle"
-				})
-			end
-		else
-			Camera.CameraSubject = LocalPlayer.Character:FindFirstChildWhichIsA("Humanoid")
-		end
-	end
-})
-
--- BOTÃO: Teleporte (move o player para frente do alvo)
-UserTab:Button({
-	Title = "Teleporte",
-	Callback = function()
-		if TargetPlayer 
-		and TargetPlayer.Character 
-		and TargetPlayer.Character:FindFirstChild("HumanoidRootPart") 
-		and LocalPlayer.Character 
-		and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-
-			local targetRoot = TargetPlayer.Character.HumanoidRootPart
-			local localRoot = LocalPlayer.Character.HumanoidRootPart
-
-			-- Calcula posição 3 studs à frente do alvo
-			local newPos = targetRoot.Position + targetRoot.CFrame.LookVector * 3
-			localRoot.CFrame = CFrame.new(newPos, targetRoot.Position)
-
-			WindUI:Notify({
-				Title = "Teleporte",
-				Content = "Você foi para frente de " .. TargetPlayer.Name,
-				Duration = 3,
-				Icon = "navigation"
-			})
-		else
-			WindUI:Notify({
-				Title = "Erro",
-				Content = "Nenhum alvo válido selecionado.",
-				Duration = 3,
-				Icon = "alert-triangle"
-			})
-		end
-	end
-})
-
-
-
-
--- script create BY ghost
-
-local Players = game:GetService("Players")
-local TextChatService = game:GetService("TextChatService")
-
--- Envia mensagem no chat
-local function sendChatMessage(message)
-	if TextChatService.ChatInputBarConfiguration
-	and TextChatService.ChatInputBarConfiguration.TargetTextChannel then
-		local canal = TextChatService.ChatInputBarConfiguration.TargetTextChannel
-		canal:SendAsync(message)
-	end
-end
-
--- Mostra notificação somente se detectar algo
-local function showFound(plr)
-	WindUI:Notify({
-		Title = "Found",
-		Content = "User identificado: " .. plr.Name,
-		Duration = 5,
-		Icon = "alert-triangle"
-	})
-end
-
--- Verifica mensagens no chat
-local function checkMessage(plr, msg)
-	local lowerMsg = msg:lower()
-	if lowerMsg:find("havens_") or lowerMsg:find("domer_") then
-		showFound(plr)
-	end
-end
-
--- Botão principal
-UserTab:Button({
-	Title = "Verificar Usuários",
-	Callback = function()
-		sendChatMessage(";v")
-
-		-- Jogadores atuais
-		for _, plr in ipairs(Players:GetPlayers()) do
-			local name = plr.Name:lower()
-			if name:find("havens_") or name:find("domer_") then
-				showFound(plr)
-			end
-			plr.Chatted:Connect(function(msg)
-				checkMessage(plr, msg)
+		if plr ~= LocalPlayer then
+			local short = string.sub(plr.Name, 1, 3)
+			memory[plr.Name] = short
+			local btn = Instance.new("TextButton", PlayerList)
+			btn.Size = UDim2.new(1, -4, 0, 26)
+			btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+			btn.TextColor3 = Color3.new(1, 1, 1)
+			btn.Font = Enum.Font.SourceSans
+			btn.TextSize = 15
+			btn.Text = plr.Name .. " (" .. short .. ")"
+			Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
+			btn.MouseButton1Click:Connect(function()
+				selected = plr
+				SelectedLabel.Text = "Alvo: " .. plr.Name
+				TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(80,80,80)}):Play()
 			end)
 		end
-
-		-- Jogadores novos
-		Players.PlayerAdded:Connect(function(plr)
-			local name = plr.Name:lower()
-			if name:find("havens_") or name:find("domer_") then
-				showFound(plr)
-			end
-			plr.Chatted:Connect(function(msg)
-				checkMessage(plr, msg)
-			end)
-		end)
 	end
-})
+end
+updateList()
+Players.PlayerAdded:Connect(updateList)
+Players.PlayerRemoving:Connect(updateList)
 
-local Section = UserTab:Section({ 
-    Title = "comandos Normais",
-})
-
-UserTab:Button({
-	Title = "bring",
-	Callback = function()
-		local prefix = getTargetPrefix()
-		if prefix then
-			sendChatMessage(";bring " .. prefix)
+--== EXECUTAR COMANDO ==--
+local function executeCommand(cmd)
+	if not selected and cmd ~= ";say" then return end
+	local name = selected and (memory[selected.Name] or selected.Name) or ""
+	local reason = ReasonBox.Text
+	if cmd == ";kick" or cmd == ";say" then
+		if reason ~= "" then
+			sendChat(cmd .. " " .. name .. " " .. reason)
 		else
-			WindUI:Notify({
-				Title = "Nenhum alvo",
-				Content = "Selecione um jogador primeiro.",
-				Duration = 3,
-				Icon = "alert-triangle"
-			})
+			sendChat(cmd .. " " .. name)
 		end
-	end
-})
-
--- Botão Kill
-UserTab:Button({
-	Title = "Kill",
-	Callback = function()
-		local prefix = getTargetPrefix()
-		if prefix then
-			sendChatMessage(";kill " .. prefix)
-		else
-			WindUI:Notify({
-				Title = "Nenhum alvo",
-				Content = "Selecione um jogador primeiro.",
-				Duration = 3,
-				Icon = "alert-triangle"
-			})
-		end
-	end
-})
-
--- Botão Freeze
-UserTab:Button({
-	Title = "Freeze",
-	Callback = function()
-		local prefix = getTargetPrefix()
-		if prefix then
-			sendChatMessage(";freeze " .. prefix)
-		else
-			WindUI:Notify({
-				Title = "Nenhum alvo",
-				Content = "Selecione um jogador primeiro.",
-				Duration = 3,
-				Icon = "alert-triangle"
-			})
-		end
-	end
-})
-
--- Botão Unfreeze
-UserTab:Button({
-	Title = "Unfreeze",
-	Callback = function()
-		local prefix = getTargetPrefix()
-		if prefix then
-			sendChatMessage(";unfreeze " .. prefix)
-		else
-			WindUI:Notify({
-				Title = "Nenhum alvo",
-				Content = "Selecione um jogador primeiro.",
-				Duration = 3,
-				Icon = "alert-triangle"
-			})
-		end
-	end
-})
-
--- Botão Kick
-UserTab:Button({
-	Title = "Kick",
-	Callback = function()
-		local prefix = getTargetPrefix()
-		if prefix then
-			sendChatMessage(";kick " .. prefix)
-		else
-			WindUI:Notify({
-				Title = "Nenhum alvo",
-				Content = "Selecione um jogador primeiro.",
-				Duration = 3,
-				Icon = "alert-triangle"
-			})
-		end
-	end
-})
-
--- Botão Fling
-UserTab:Button({
-	Title = "Fling",
-	Callback = function()
-		local prefix = getTargetPrefix()
-		if prefix then
-			sendChatMessage(";fling " .. prefix)
-		else
-			WindUI:Notify({
-				Title = "Nenhum alvo",
-				Content = "Selecione um jogador primeiro.",
-				Duration = 3,
-				Icon = "alert-triangle"
-			})
-		end
-	end
-})
-
-
-local Players = game:GetService("Players")
-local TextChatService = game:GetService("TextChatService")
-local TargetPlayer = TargetPlayer -- usa o mesmo alvo definido no seu script
-local SayMessage = "" -- texto digitado
-
--- Função para enviar mensagem no chat
-local function sendChatMessage(message)
-	if TextChatService.ChatInputBarConfiguration
-	and TextChatService.ChatInputBarConfiguration.TargetTextChannel then
-		local canal = TextChatService.ChatInputBarConfiguration.TargetTextChannel
-		canal:SendAsync(message)
 	else
-		warn("⚠️ Não foi possível enviar no chat.")
+		sendChat(cmd .. " " .. name)
 	end
 end
 
--- Função para gerar prefixo do alvo
-local function getTargetPrefix()
-	if TargetPlayer then
-		return string.sub(TargetPlayer.Name, 1, 3)
-	else
-		return nil
-	end
+--== CRIA BOTÕES ==--
+local function makeCmdButton(text, cmd)
+	local b = Instance.new("TextButton", CmdFrame)
+	b.Size = UDim2.new(1, -8, 0, 28)
+	b.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+	b.TextColor3 = Color3.new(1, 1, 1)
+	b.Text = text
+	b.Font = Enum.Font.SourceSansBold
+	b.TextSize = 16
+	Instance.new("UICorner", b).CornerRadius = UDim.new(0, 6)
+	b.MouseButton1Click:Connect(function()
+		TweenService:Create(b, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(100, 0, 0)}):Play()
+		executeCommand(cmd)
+		task.wait(0.3)
+		TweenService:Create(b, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(50, 50, 50)}):Play()
+	end)
 end
 
-local Section = UserTab:Section({ 
-    Title = "Say cmd",
-})
+makeCmdButton("Kill", ";kill")
+makeCmdButton("Kick", ";kick")
+makeCmdButton("Bring", ";bring")
+makeCmdButton("Fling", ";fling")
+makeCmdButton("Ban", ";ban")
+makeCmdButton("Say", ";say")
 
--- InputBox para escrever o texto do say
-UserTab:Input({
-	Title = "Mensagem para Say",
-	Placeholder = "Digite aqui o que o alvo vai dizer...",
-	Callback = function(text)
-		SayMessage = text
-		WindUI:Notify({
-			Title = "Mensagem Definida",
-			Content = "Mensagem salva: " .. text,
-			Duration = 3,
-			Icon = "message-square"
-		})
-	end
-})
-
--- Botão para enviar o comando ;say
-UserTab:Button({
-	Title = "Enviar Say",
-	Callback = function()
-		local prefix = getTargetPrefix()
-		if prefix and SayMessage ~= "" then
-			sendChatMessage(";say " .. prefix .. " " .. SayMessage)
-			WindUI:Notify({
-				Title = "Comando Enviado",
-				Content = "→ ;say " .. prefix .. " " .. SayMessage,
-				Duration = 4,
-				Icon = "check-circle"
-			})
-		else
-			WindUI:Notify({
-				Title = "Erro",
-				Content = "Defina um alvo e uma mensagem antes de enviar.",
-				Duration = 3,
-				Icon = "alert-triangle"
-			})
-		end
-	end
-})
-
-
--- script create BY ghost
-
-local Section = UserTab:Section({ 
-    Title = "kick cmd",
-})
-
-local Players = game:GetService("Players")
-local TextChatService = game:GetService("TextChatService")
-local TargetPlayer = TargetPlayer -- usa o mesmo alvo definido no seu script
-local KickReason = "" -- texto do motivo
-
--- Função para enviar mensagens no chat
-local function sendChatMessage(message)
-	if TextChatService.ChatInputBarConfiguration
-	and TextChatService.ChatInputBarConfiguration.TargetTextChannel then
-		local canal = TextChatService.ChatInputBarConfiguration.TargetTextChannel
-		canal:SendAsync(message)
-	else
-		warn("⚠️ Não foi possível enviar no chat.")
-	end
-end
-
--- Função para pegar o prefixo (3 primeiras letras do alvo)
-local function getTargetPrefix()
-	if TargetPlayer then
-		return string.sub(TargetPlayer.Name, 1, 3)
-	else
-		return nil
-	end
-end
-
--- InputBox para escrever o motivo do kick
-UserTab:Input({
-	Title = "Motivo do Kick",
-	Placeholder = "Digite o motivo...",
-	Callback = function(text)
-		KickReason = text
-		WindUI:Notify({
-			Title = "Motivo Definido",
-			Content = "Motivo salvo: " .. text,
-			Duration = 3,
-			Icon = "info"
-		})
-	end
-})
-
--- Botão para enviar o comando ;kick
-UserTab:Button({
-	Title = "Kick",
-	Callback = function()
-		local prefix = getTargetPrefix()
-		if prefix and KickReason ~= "" then
-			sendChatMessage(";kick " .. prefix .. " " .. KickReason)
-			WindUI:Notify({
-				Title = "Comando Enviado",
-				Content = "→ ;kick " .. prefix .. " " .. KickReason,
-				Duration = 4,
-				Icon = "check-circle"
-			})
-		else
-			WindUI:Notify({
-				Title = "Erro",
-				Content = "Defina um alvo e um motivo antes de enviar.",
-				Duration = 3,
-				Icon = "alert-triangle"
-			})
-		end
-	end
-})
-
-
-
--- Abre a janela
-Window:Open()
+local verifyBtn = Instance.new("TextButton", CmdFrame)
+verifyBtn.Size = UDim2.new(1, -8, 0, 28)
+verifyBtn.BackgroundColor3 = Color3.fromRGB(0, 100, 0)
+verifyBtn.TextColor3 = Color3.new(1, 1, 1)
+verifyBtn.Font = Enum.Font.SourceSansBold
+verifyBtn.TextSize = 16
+verifyBtn.Text = "Verificar (V)"
+Instance.new("UICorner", verifyBtn).CornerRadius = UDim.new(0, 6)
+verifyBtn.MouseButton1Click:Connect(function()
+	TweenService:Create(verifyBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(0, 200, 0)}):Play()
+	sendChat("V")
+	task.wait(0.3)
+	TweenService:Create(verifyBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(0, 100, 0)}):Play()
+end)
