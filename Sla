@@ -7,16 +7,41 @@ gui.ResetOnSpawn = false
 gui.Parent = lp.PlayerGui
 
 local openBtn = Instance.new("TextButton")
-openBtn.Size = UDim2.new(0,40,0,40)
+openBtn.Size = UDim2.new(0,140,0,40)
 openBtn.Position = UDim2.new(0,20,0.5,-20)
 openBtn.BackgroundColor3 = Color3.fromRGB(25,25,25)
-openBtn.BorderSizePixel = 0
-openBtn.Text = ""
+openBtn.BorderSizePixel = 1
+openBtn.BorderColor3 = Color3.fromRGB(70,70,70)
+openBtn.Text = "Abrir painel 🛠️"
+openBtn.TextColor3 = Color3.new(1,1,1)
+openBtn.Font = Enum.Font.Code
+openBtn.TextSize = 16
 openBtn.Parent = gui
 
 local openCorner = Instance.new("UICorner")
-openCorner.CornerRadius = UDim.new(0,10)
+openCorner.CornerRadius = UDim.new(0,8)
 openCorner.Parent = openBtn
+
+local stroke = Instance.new("UIStroke")
+stroke.Color = Color3.fromRGB(90,90,90)
+stroke.Thickness = 1
+stroke.Parent = openBtn
+
+openBtn.MouseEnter:Connect(function()
+	TweenService:Create(openBtn,TweenInfo.new(0.15),{
+		BackgroundColor3 = Color3.fromRGB(40,40,40)
+	}):Play()
+end)
+
+openBtn.MouseLeave:Connect(function()
+	TweenService:Create(openBtn,TweenInfo.new(0.15),{
+		BackgroundColor3 = Color3.fromRGB(25,25,25)
+	}):Play()
+end)
+
+openBtn.MouseButton1Click:Connect(function()
+	main.Visible = not main.Visible
+end)
 
 local main = Instance.new("Frame")
 main.Size = UDim2.new(0,420,0,260)
@@ -533,87 +558,186 @@ hubTitle = text or "Hub"
 title.Text = hubTitle
 end
 
+
+
+-- Notification System (Executor Ready, Clean & Optimized)
+
 local TweenService = game:GetService("TweenService")
+local CoreGui = game:GetService("CoreGui")
+
+local Notification = {}
+Notification.__index = Notification
+
+local CONFIG = {
+    MaxNotifications = 5,
+    Padding = 10,
+    Width = 300,
+    Position = "BottomRight", -- BottomRight / TopRight
+    DefaultDuration = 5
+}
+
+local COLORS = {
+    Background = Color3.fromRGB(30,30,30),
+    Success = Color3.fromRGB(80,200,120),
+    Error = Color3.fromRGB(220,70,70),
+    Warning = Color3.fromRGB(240,180,60),
+    Info = Color3.fromRGB(80,140,255)
+}
+
+local ICONS = {
+    Success = "rbxassetid://12690727184",
+    Error = "rbxassetid://103344771690872",
+    Warning = "rbxassetid://15484984201",
+    Info = "rbxassetid://76311199408449"
+}
 
 local gui = Instance.new("ScreenGui")
+gui.Name = "NotifySystem"
 gui.ResetOnSpawn = false
-gui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+pcall(function() gui.Parent = CoreGui end)
 
-local holder = Instance.new("Frame")
-holder.AnchorPoint = Vector2.new(1,1)
-holder.Position = UDim2.new(1,-10,1,-10)
-holder.Size = UDim2.new(0,260,1,0)
-holder.BackgroundTransparency = 1
-holder.Parent = gui
+local container = Instance.new("Frame")
+container.BackgroundTransparency = 1
+container.Size = UDim2.new(1,0,1,0)
+container.Parent = gui
 
-local layout = Instance.new("UIListLayout")
-layout.Padding = UDim.new(0,6)
-layout.SortOrder = Enum.SortOrder.LayoutOrder
-layout.VerticalAlignment = Enum.VerticalAlignment.Bottom
-layout.Parent = holder
+local list = Instance.new("UIListLayout")
+list.Padding = UDim.new(0, CONFIG.Padding)
+list.SortOrder = Enum.SortOrder.LayoutOrder
+list.VerticalAlignment = CONFIG.Position == "BottomRight" and Enum.VerticalAlignment.Bottom or Enum.VerticalAlignment.Top
+list.HorizontalAlignment = Enum.HorizontalAlignment.Right
+list.Parent = container
 
-local function Notify(title,text,time)
+local active = {}
+local queue = {}
 
-local n = Instance.new("Frame")  
-n.Size = UDim2.new(0,260,0,0)  
-n.BackgroundColor3 = Color3.fromRGB(20,20,20)  
-n.BorderColor3 = Color3.fromRGB(70,70,70)  
-n.BorderSizePixel = 1  
-n.Parent = holder  
+local function createNotification(data)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(0, CONFIG.Width, 0, 70)
+    frame.BackgroundColor3 = COLORS.Background
+    frame.BackgroundTransparency = 0.1
+    frame.AnchorPoint = Vector2.new(1, CONFIG.Position == "BottomRight" and 1 or 0)
+    frame.ClipsDescendants = true
 
-local corner = Instance.new("UICorner")  
-corner.CornerRadius = UDim.new(0,6)  
-corner.Parent = n  
+    local corner = Instance.new("UICorner", frame)
+    corner.CornerRadius = UDim.new(0, 10)
 
+    local stroke = Instance.new("UIStroke", frame)
+    stroke.Color = COLORS[data.Type] or COLORS.Info
+    stroke.Thickness = 1
 
-local t = Instance.new("TextLabel")  
-t.Size = UDim2.new(1,-10,0,20)  
-t.Position = UDim2.new(0,5,0,4)  
-t.BackgroundTransparency = 1  
-t.Text = title  
-t.TextColor3 = Color3.new(1,1,1)  
-t.Font = Enum.Font.Code  
-t.TextSize = 16  
-t.TextXAlignment = Enum.TextXAlignment.Left  
-t.Parent = n  
+    local icon = Instance.new("ImageLabel")
+    icon.Size = UDim2.new(0,24,0,24)
+    icon.Position = UDim2.new(0,10,0,10)
+    icon.BackgroundTransparency = 1
+    icon.Image = ICONS[data.Type] or ICONS.Info
+    icon.Parent = frame
 
+    local title = Instance.new("TextLabel")
+    title.Text = data.Title or "Notification"
+    title.Font = Enum.Font.GothamBold
+    title.TextSize = 14
+    title.TextColor3 = Color3.new(1,1,1)
+    title.BackgroundTransparency = 1
+    title.Position = UDim2.new(0,40,0,8)
+    title.Size = UDim2.new(1,-50,0,18)
+    title.TextXAlignment = Enum.TextXAlignment.Left
+    title.Parent = frame
 
-local d = Instance.new("TextLabel")  
-d.Size = UDim2.new(1,-10,0,18)  
-d.Position = UDim2.new(0,5,0,24)  
-d.BackgroundTransparency = 1  
-d.Text = text  
-d.TextColor3 = Color3.fromRGB(180,180,180)  
-d.Font = Enum.Font.Code  
-d.TextSize = 14  
-d.TextWrapped = true  
-d.TextXAlignment = Enum.TextXAlignment.Left  
-d.Parent = n  
+    local text = Instance.new("TextLabel")
+    text.Text = data.Text or ""
+    text.Font = Enum.Font.Gotham
+    text.TextSize = 13
+    text.TextColor3 = Color3.fromRGB(200,200,200)
+    text.BackgroundTransparency = 1
+    text.Position = UDim2.new(0,40,0,26)
+    text.Size = UDim2.new(1,-50,0,30)
+    text.TextWrapped = true
+    text.TextXAlignment = Enum.TextXAlignment.Left
+    text.Parent = frame
 
+    local progress = Instance.new("Frame")
+    progress.BackgroundColor3 = COLORS[data.Type] or COLORS.Info
+    progress.Size = UDim2.new(1,0,0,3)
+    progress.Position = UDim2.new(0,0,1,-3)
+    progress.BorderSizePixel = 0
+    progress.Parent = frame
 
-TweenService:Create(n,TweenInfo.new(0.25),{  
-	Size = UDim2.new(0,260,0,50)  
-}):Play()  
+    local close = Instance.new("TextButton")
+    close.Text = "X"
+    close.Font = Enum.Font.GothamBold
+    close.TextSize = 12
+    close.TextColor3 = Color3.fromRGB(180,180,180)
+    close.BackgroundTransparency = 1
+    close.Size = UDim2.new(0,20,0,20)
+    close.Position = UDim2.new(1,-25,0,5)
+    close.Parent = frame
 
+    frame.Parent = container
 
-task.delay(time or 3,function()  
+    frame.Position = UDim2.new(1, 350, 1, 0)
+    frame.BackgroundTransparency = 1
 
-	local tw = TweenService:Create(n,TweenInfo.new(0.25),{  
-		Size = UDim2.new(0,260,0,0)  
-	})  
+    TweenService:Create(frame, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {
+        Position = UDim2.new(1, -10, 1, 0),
+        BackgroundTransparency = 0.1
+    }):Play()
 
-	tw:Play()  
+    local duration = data.Duration or CONFIG.DefaultDuration
 
-	tw.Completed:Connect(function()  
-		n:Destroy()  
-	end)  
+    TweenService:Create(progress, TweenInfo.new(duration, Enum.EasingStyle.Linear), {
+        Size = UDim2.new(0,0,0,3)
+    }):Play()
 
-end)
+    local removed = false
 
+    local function remove()
+        if removed then return end
+        removed = true
+
+        TweenService:Create(frame, TweenInfo.new(0.25, Enum.EasingStyle.Quad), {
+            Position = UDim2.new(1, 350, 1, 0),
+            BackgroundTransparency = 1
+        }):Play()
+
+        task.delay(0.3, function()
+            frame:Destroy()
+            table.remove(active, table.find(active, frame))
+            if #queue > 0 then
+                local nextData = table.remove(queue, 1)
+                Notification:Notify(nextData)
+            end
+        end)
+    end
+
+    close.MouseButton1Click:Connect(remove)
+    task.delay(duration, remove)
+
+    table.insert(active, frame)
 end
 
-Notify("Hub","Script carregado",3)
-Notify("Sistema","painel Admin exexutado",4)
+function Notification:Notify(data)
+    data.Type = data.Type or "Info"
+
+    if #active >= CONFIG.MaxNotifications then
+        table.insert(queue, data)
+        return
+    end
+
+    createNotification(data)
+end
+
+-- GLOBAL FUNCTION
+getgenv().Notify = function(tbl)
+    Notification:Notify(tbl)
+end
+
+Notify({
+    Title = "Script",
+    Text = "Script Esta carregando....",
+    Duration = 3,
+    Type = "Success"
+})
 
 function tab:Dropdown(text,list,desc,callback)  
 
@@ -705,6 +829,7 @@ end
 
 local mainTab=Lib:Tab("> Job id")
 
+
 mainTab:Section("cole seu codigo do discord")
 
 local TeleportService = game:GetService("TeleportService")
@@ -784,7 +909,12 @@ main2Tab:Button("Tp to player",nil,function()
 		mychar.HumanoidRootPart.CFrame = char.HumanoidRootPart.CFrame * CFrame.new(0,0,3)
 	end
 
-	Notify("Teleport","Tp "..plr.Name)
+	Notify({
+    Title = "painel Admin",
+    Text = "teleportado",
+    Duration = 1,
+    Type = "Success"
+})
 
 end)
 
@@ -830,11 +960,22 @@ main2Tab:Toggle("View / Unview",nil,function(v)
 					cam.CameraSubject = mychar.Humanoid
 				end
 				viewing = false
-				Notify("View","Player saiu")
+				
+					Notify({
+    Title = "painel Admin",
+    Text = "Player saiu Ou Erro No view",
+    Duration = 3,
+    Type = "Warning"
+})
 			end
 		end)
 
-		Notify("View","Observando "..plr.Name)
+			Notify({
+    Title = "painel Admin",
+    Text = "Olhando...",
+    Duration = 1,
+    Type = "Success"
+})
 
 	else
 		local mychar = Players.LocalPlayer.Character
@@ -849,52 +990,137 @@ end)
  
 main2Tab:Section("Cmds | target")
 
-main2Tab:Button("verificar users",nil,function()
-	sendChat("v")
-end)
-
 main2Tab:Button("Kill",nil,function()
 	runCmd(";kill")
+	
+	Notify({
+    Title = "Painel Admin",
+    Text = "comando enviado",
+    Duration = 1,
+    Type = "Success"
+})
+	
 end)
 
 main2Tab:Button("mute",nil,function()
 	runCmd(";mute")
+	
+		Notify({
+    Title = "Painel Admin",
+    Text = "comando enviado",
+    Duration = 1,
+    Type = "Success"
+})
+	
 end)
 
 main2Tab:Button("unmute",nil,function()
 	runCmd(";unmute")
+	
+	Notify({
+    Title = "Painel Admin",
+    Text = "comando enviado",
+    Duration = 1,
+    Type = "Success"
+})
+	
 end)
 
-main2Tab:Button("Kick (sem motivo)",nil,function()
+main2Tab:Button("Kick ( sem motivo )",nil,function()
 	runCmd(";kick")
+	
+	Notify({
+    Title = "Painel Admin",
+    Text = "comando enviado",
+    Duration = 1,
+    Type = "Success"
+})
+	
 end)
+
 
 main2Tab:Button("void",nil,function()
 	runCmd(";void")
+	
+	Notify({
+    Title = "Painel Admin",
+    Text = "comando enviado",
+    Duration = 1,
+    Type = "Success"
+})
+	
 end)
 
 main2Tab:Button("Bring",nil,function()
 	runCmd(";bring")
+	
+	Notify({
+    Title = "Painel Admin",
+    Text = "comando enviado",
+    Duration = 1,
+    Type = "Success"
+})
+	
 end)
 
 main2Tab:Button("Fling",nil,function()
 	runCmd(";fling")
+	
+	Notify({
+    Title = "Painel Admin",
+    Text = "comando enviado",
+    Duration = 1,
+    Type = "Success"
+})
+	
 end)
 
-main2Tab:Button("Ban [perm]",nil,function()
+main2Tab:Button("Ban [ perm ]",nil,function()
 	runCmd(";ban")
+	
+	Notify({
+    Title = "Painel Admin",
+    Text = "comando enviado",
+    Duration = 1,
+    Type = "Success"
+})
+	
 end)
 
 main2Tab:Button("Freeze",nil,function()
 	runCmd(";freeze")
+	
+	Notify({
+    Title = "Painel Admin",
+    Text = "comando enviado",
+    Duration = 1,
+    Type = "Success"
+})
+	
 end)
 
 main2Tab:Button("Unfreeze",nil,function()
 	runCmd(";unfreeze")
+	
+	Notify({
+    Title = "Painel Admin",
+    Text = "comando enviado",
+    Duration = 1,
+    Type = "Success"
+})
+	
 end)
 
 main2Tab:Button("Unfly (beta)",nil,function()
 	runCmd(";unfly")
+	
+	Notify({
+    Title = "Painel Admin",
+    Text = "comando enviado",
+    Duration = 1,
+    Type = "Success"
+})
+	
 end)
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -925,7 +1151,7 @@ local function SilentCmd(cmd, btn)
 	end
 end
 
-main2Tab:Section("Cmds slient")
+main2Tab:Section("Cmds | Sem chat")
 
 local function addButton(name, cmd)
 	main2Tab:Button(name, nil, function(btn)
@@ -947,7 +1173,7 @@ local function addButton(name, cmd)
 	end)
 end
 
-addButton("Verificar Users", "v")
+
 addButton("Kill", ";kill")
 addButton("mute", ";mute")
 addButton("unmute", ";unmute")
@@ -1005,6 +1231,8 @@ b2Tab:Button("Aplicar Gravidade",nil,function()
 end)
 
 local c2Tab=Lib:Tab("> Configs ")
+
+c2Tab:Section("TUDO E SALVO!")
 
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
@@ -1066,21 +1294,36 @@ end
 local warned = {}
 local teleported = {}
 
+local function isExactTag(msg)
+	local m = msg:lower()
+	return m == "##" or m == "#2"
+end
+
 local function onPlayerChat(p,msg)
 	if p == lp then return end
 
-	if settings.autoWarn and not warned[p] then
-		warned[p] = true
-		Notify("Warn","Player falou: "..p.Name)
-	end
+	if isExactTag(msg) then
 
-	if settings.autoTeleport and not teleported[p] then
-		teleported[p] = true
-		local my = lp.Character
-		local char = p.Character
-		if my and char and my:FindFirstChild("HumanoidRootPart") and char:FindFirstChild("HumanoidRootPart") then
-			my.HumanoidRootPart.CFrame = char.HumanoidRootPart.CFrame * CFrame.new(0,0,3)
+		if settings.autoWarn and not warned[p] then
+			warned[p] = true
+			
+			Notify({
+				Title = "Painel Admin",
+				Text = "Achamos um Usuario Script",
+				Duration = 1,
+				Type = "Success"
+			})
 		end
+
+		if settings.autoTeleport and not teleported[p] then
+			teleported[p] = true
+			local my = lp.Character
+			local char = p.Character
+			if my and char and my:FindFirstChild("HumanoidRootPart") and char:FindFirstChild("HumanoidRootPart") then
+				my.HumanoidRootPart.CFrame = char.HumanoidRootPart.CFrame * CFrame.new(0,0,3)
+			end
+		end
+
 	end
 end
 
@@ -1128,7 +1371,7 @@ local function createPos()
 	posLabel.TextStrokeTransparency = 0
 	posLabel.TextStrokeColor3 = Color3.new(0,0,0)
 	posLabel.Text = "0 , 0 , 0"
-	posLabel.Parent = fpsLabel.Parent
+	posLabel.Parent = fpsLabel and fpsLabel.Parent or lp.PlayerGui
 end
 
 local function runFps()
@@ -1189,6 +1432,70 @@ c2Tab:Toggle("Auto Tp users ( If detect )",nil,function(v)
 	save()
 end)
 
+c2Tab:Section("Jogatina | gaming")
+
+local texturesCache = {}
+local shadowCache = {}
+local isRunning = false
+
+local TARGET_CLASSES = {
+    ["Decal"] = true,
+    ["Texture"] = true
+}
+
+local function applyAntiLag()
+    if isRunning then return end
+    isRunning = true
+
+    local descendants = workspace:GetDescendants()
+    
+    for i = 1, #descendants do
+        if not isRunning then break end
+        
+        local obj = descendants[i]
+        
+        if TARGET_CLASSES[obj.ClassName] then
+            texturesCache[obj] = obj.Parent
+            obj.Parent = nil
+        elseif obj:IsA("BasePart") and obj.CastShadow then
+            shadowCache[obj] = true
+            obj.CastShadow = false
+        end
+
+        if i % 100 == 0 then
+            task.wait()
+        end
+    end
+end
+
+local function restoreSettings()
+    isRunning = false
+
+    for obj, parent in pairs(texturesCache) do
+        if obj and parent then
+            obj.Parent = parent
+        end
+    end
+
+    for obj, _ in pairs(shadowCache) do
+        if obj then
+            obj.CastShadow = true
+        end
+    end
+
+    table.clear(texturesCache)
+    table.clear(shadowCache)
+end
+
+c2Tab:Toggle("Anti Lag ( New )", nil, function(v)
+    if v then
+        task.spawn(applyAntiLag)
+    else
+        restoreSettings()
+    end
+end)
+
+
 c2Tab:Toggle("Show fps",nil,function(v)
 	settings.showFps = v
 	save()
@@ -1201,15 +1508,3 @@ c2Tab:Toggle("Show fps",nil,function(v)
 	end
 end)
 
-c2Tab:Toggle("Debug Position",nil,function(v)
-	settings.debugPos = v
-	save()
-	if v then
-		if not fpsLabel then createFps() end
-		createPos()
-		runPos()
-	elseif posLabel then
-		posLabel:Destroy()
-		posLabel = nil
-	end
-end)
