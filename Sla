@@ -1087,6 +1087,66 @@ main2Tab:Button("Ban [ perm ]",nil,function()
 	
 end)
 
+main2Tab:Button("blind ",nil,function()
+	runCmd(";blind")
+	
+	Notify({
+    Title = "Painel Admin",
+    Text = "comando enviado",
+    Duration = 1,
+    Type = "Success"
+})
+	
+end)
+
+main2Tab:Button("unblind ",nil,function()
+	runCmd(";unblind")
+	
+	Notify({
+    Title = "Painel Admin",
+    Text = "comando enviado",
+    Duration = 1,
+    Type = "Success"
+})
+	
+end)
+
+main2Tab:Button("sit ",nil,function()
+	runCmd(";sit")
+	
+	Notify({
+    Title = "Painel Admin",
+    Text = "comando enviado",
+    Duration = 1,
+    Type = "Success"
+})
+	
+end)
+
+main2Tab:Button("mimic ( controll )",nil,function()
+	runCmd(";mimic")
+	
+	Notify({
+    Title = "Painel Admin",
+    Text = "use view no alvo pra ficar melhor",
+    Duration = 1,
+    Type = "Success"
+})
+	
+end)
+
+main2Tab:Button("unmimic ( controll )",nil,function()
+	runCmd(";unmimic")
+	
+	Notify({
+    Title = "Painel Admin",
+    Text = "comando enviado",
+    Duration = 1,
+    Type = "Success"
+})
+	
+end)
+
 main2Tab:Button("Freeze",nil,function()
 	runCmd(";freeze")
 	
@@ -1180,6 +1240,11 @@ addButton("unmute", ";unmute")
 addButton("Kick (sem motivo)", ";kick")
 addButton("Bring", ";bring")
 addButton("Fling", ";fling")
+addButton("mimic", ";mimic")
+addButton("unmimic", ";mimic")
+addButton("sit", ";sit")
+addButton("blind", ";blind")
+addButton("unblind", ";unblind")
 addButton("void", ";void")
 addButton("Ban [perm]", ";ban")
 addButton("Freeze", ";freeze")
