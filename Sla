@@ -733,8 +733,8 @@ getgenv().Notify = function(tbl)
 end
 
 Notify({
-    Title = "Script",
-    Text = "Script Esta carregando....",
+    Title = "painel",
+    Text = "painel Esta carregando....",
     Duration = 3,
     Type = "Success"
 })
@@ -858,6 +858,40 @@ end
 
 end)
 
+local cm2Tab=Lib:Tab("> cmds")
+
+cm2Tab:Section("-cmds com motivo-")
+
+cm2Tab:Section("kick (alvo) (motivo) ")
+
+cm2Tab:Section("say (alvo) (Sla 67) ")
+
+cm2Tab:Section("-Cmd Sem motivo-")
+
+cm2Tab:Section("jaill")
+
+cm2Tab:Section("float")
+
+cm2Tab:Section("Fling")
+
+cm2Tab:Section("Kill")
+
+cm2Tab:Section("bring")
+
+cm2Tab:Section("blind")
+
+cm2Tab:Section("freeze")
+
+cm2Tab:Section("ban")
+
+cm2Tab:Section("mimic")
+
+cm2Tab:Section("sit")
+
+cm2Tab:Section("void")
+
+cm2Tab:Section("unfly")
+
 local main2Tab=Lib:Tab("> Player")
 
 local Players = game:GetService("Players")
@@ -884,18 +918,33 @@ local function findPlayer(str)
 	end
 end
 
-main2Tab:Textbox("target","nome ou nikname",nil,function(v)
+main2Tab:Textbox("alvo","nome ou nikname",nil,function(v)
 	alvo = v
+end) 
+
+local razao = ""
+
+main2Tab:Textbox("reason","motivo",nil,function(v)
+	razao = v
 end)
 
-local function runCmd(cmd)
+local function runCmdR(cmd)
 	if alvo == "" then return end
+	
 	local plr = findPlayer(alvo)
-	if plr then
-		local short = string.sub(plr.Name,1,4)
-		sendChat(cmd.." "..short)
+	if not plr then return end
+	
+	local short = string.sub(plr.Name,1,4)
+	local msg = cmd.." "..short
+	
+	if razao and razao ~= "" then
+		msg = msg.." "..razao
 	end
+	
+	sendChat(msg)
 end
+
+main2Tab:Section("outros")
 
 main2Tab:Button("Tp to player",nil,function()
 
@@ -988,7 +1037,15 @@ main2Tab:Toggle("View / Unview",nil,function(v)
 
 end)
  
-main2Tab:Section("Cmds | target")
+main2Tab:Section("Cmds | Alvo")
+
+main2Tab:Button("Kick (motivo)",nil,function()
+	runCmdR(";kick")
+end)
+
+main2Tab:Button("Say (motivo)",nil,function()
+	runCmdR(";say")
+end)
 
 main2Tab:Button("Kill",nil,function()
 	runCmd(";kill")
@@ -1007,7 +1064,7 @@ main2Tab:Button("mute",nil,function()
 	
 		Notify({
     Title = "Painel Admin",
-    Text = "comando enviado",
+    Text = "chat ativado (alvo)",
     Duration = 1,
     Type = "Success"
 })
@@ -1019,6 +1076,18 @@ main2Tab:Button("unmute",nil,function()
 	
 	Notify({
     Title = "Painel Admin",
+    Text = "chat ativado (alvo)",
+    Duration = 1,
+    Type = "Success"
+})
+	
+end)
+
+main2Tab:Button("float",nil,function()
+	runCmd(";float")
+	
+		Notify({
+    Title = "Painel Admin",
     Text = "comando enviado",
     Duration = 1,
     Type = "Success"
@@ -1026,12 +1095,36 @@ main2Tab:Button("unmute",nil,function()
 	
 end)
 
-main2Tab:Button("Kick ( sem motivo )",nil,function()
-	runCmd(";kick")
+main2Tab:Button("unfloat",nil,function()
+	runCmd(";unfloat")
 	
 	Notify({
     Title = "Painel Admin",
     Text = "comando enviado",
+    Duration = 1,
+    Type = "Success"
+})
+	
+end)
+
+main2Tab:Button("jaill",nil,function()
+	runCmd(";jaill")
+	
+		Notify({
+    Title = "Painel Admin",
+    Text = "Comando enviado",
+    Duration = 1,
+    Type = "Success"
+})
+	
+end)
+
+main2Tab:Button("unjaill",nil,function()
+	runCmd(";unjaill")
+	
+	Notify({
+    Title = "Painel Admin",
+    Text = "comando desativado",
     Duration = 1,
     Type = "Success"
 })
@@ -1104,7 +1197,7 @@ main2Tab:Button("unblind ",nil,function()
 	
 	Notify({
     Title = "Painel Admin",
-    Text = "comando enviado",
+    Text = "comando desativado",
     Duration = 1,
     Type = "Success"
 })
@@ -1116,7 +1209,7 @@ main2Tab:Button("sit ",nil,function()
 	
 	Notify({
     Title = "Painel Admin",
-    Text = "comando enviado",
+    Text = "comando enviado ",
     Duration = 1,
     Type = "Success"
 })
@@ -1127,9 +1220,9 @@ main2Tab:Button("mimic ( controll )",nil,function()
 	runCmd(";mimic")
 	
 	Notify({
-    Title = "Painel Admin",
+    Title = "recomendo",
     Text = "use view no alvo pra ficar melhor",
-    Duration = 1,
+    Duration = 5,
     Type = "Success"
 })
 	
@@ -1140,7 +1233,7 @@ main2Tab:Button("unmimic ( controll )",nil,function()
 	
 	Notify({
     Title = "Painel Admin",
-    Text = "comando enviado",
+    Text = "comando desativado",
     Duration = 1,
     Type = "Success"
 })
@@ -1164,7 +1257,7 @@ main2Tab:Button("Unfreeze",nil,function()
 	
 	Notify({
     Title = "Painel Admin",
-    Text = "comando enviado",
+    Text = "comando desativado",
     Duration = 1,
     Type = "Success"
 })
@@ -1176,7 +1269,7 @@ main2Tab:Button("Unfly (beta)",nil,function()
 	
 	Notify({
     Title = "Painel Admin",
-    Text = "comando enviado",
+    Text = "fly foi desativado | isso esta em beta!!",
     Duration = 1,
     Type = "Success"
 })
@@ -1237,6 +1330,11 @@ end
 addButton("Kill", ";kill")
 addButton("mute", ";mute")
 addButton("unmute", ";unmute")
+addButton("jaill", ";jaill")
+addButton("unjaill", ";unjaill")
+addButton("float", ";float")
+addButton("unfloat", ";unfloat")
+addButton("say (alvo) (msg)", ";say")
 addButton("Kick (sem motivo)", ";kick")
 addButton("Bring", ";bring")
 addButton("Fling", ";fling")
@@ -1573,3 +1671,9 @@ c2Tab:Toggle("Show fps",nil,function(v)
 	end
 end)
 
+Notify({
+    Title = "painel",
+    Text = "completamente Carregado",
+    Duration = 3,
+    Type = "Success"
+})
