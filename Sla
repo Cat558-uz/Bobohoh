@@ -1301,7 +1301,7 @@ local function SilentCmd(cmd, btn)
 
 		RPNText:FireServer(unpack(args))
 
-		task.delay(0.1, function()
+		task.delay(0.5, function()
 	local args = {
 		[1] = "RolePlayName",
 		[2] = ";c"
