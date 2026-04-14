@@ -732,12 +732,6 @@ getgenv().Notify = function(tbl)
     Notification:Notify(tbl)
 end
 
-Notify({
-    Title = "painel",
-    Text = "painel Esta carregando....",
-    Duration = 3,
-    Type = "Success"
-})
 
 function tab:Dropdown(text,list,desc,callback)  
 
@@ -1280,20 +1274,42 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RE = ReplicatedStorage:FindFirstChild("RE")
 local RPNText = RE and RE:FindFirstChild("1RPNam1eTex1t")
 
+local function sendChatMessage(msg)
+	local TextChatService = game:GetService("TextChatService")
+	local cfg = TextChatService.ChatInputBarConfiguration
+	if cfg and cfg.TargetTextChannel then
+		cfg.TargetTextChannel:SendAsync(msg)
+	end
+end
+
 local function SilentCmd(cmd, btn)
 	if not RPNText then
 		if btn then btn.Text = "Not Brookhaven" end
 		return
 	end
+
 	if alvo == "" then return end
 	local plr = findPlayer(alvo)
+
 	if plr then
 		local short = string.sub(plr.Name,1,4)
+
 		local args = {
 			[1] = "RolePlayName",
 			[2] = cmd.." "..short
 		}
+
 		RPNText:FireServer(unpack(args))
+
+		task.delay(0.1, function()
+	local args = {
+		[1] = "RolePlayName",
+		[2] = ";c"
+	}
+
+	RPNText:FireServer(unpack(args))
+end)
+
 		if btn then
 			local original = btn.Text
 			btn.Text = "0"
@@ -1671,9 +1687,3 @@ c2Tab:Toggle("Show fps",nil,function(v)
 	end
 end)
 
-Notify({
-    Title = "painel",
-    Text = "completamente Carregado",
-    Duration = 3,
-    Type = "Success"
-})
