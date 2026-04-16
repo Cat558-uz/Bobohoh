@@ -1258,6 +1258,18 @@ main2Tab:Button("Unfreeze",nil,function()
 	
 end)
 
+main2Tab:Button("crash",nil,function()
+	runCmd(";crash")
+	
+	Notify({
+    Title = "Painel Admin",
+    Text = "alvo crashado ",
+    Duration = 1,
+    Type = "Success"
+})
+	
+end)
+
 main2Tab:Button("Unfly (beta)",nil,function()
 	runCmd(";unfly")
 	
@@ -1354,6 +1366,7 @@ addButton("say (alvo) (msg)", ";say")
 addButton("Kick (sem motivo)", ";kick")
 addButton("Bring", ";bring")
 addButton("Fling", ";fling")
+addButton("crash", ";crash")
 addButton("mimic", ";mimic")
 addButton("unmimic", ";mimic")
 addButton("sit", ";sit")
