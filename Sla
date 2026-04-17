@@ -1053,6 +1053,18 @@ main2Tab:Button("Kill",nil,function()
 	
 end)
 
+main2Tab:Button("jumpscare / kick",nil,function()
+	runCmd(";jumps")
+	
+	Notify({
+    Title = "Painel Admin",
+    Text = "comando enviado",
+    Duration = 1,
+    Type = "Success"
+})
+	
+end)
+
 main2Tab:Button("mute",nil,function()
 	runCmd(";mute")
 	
@@ -1356,6 +1368,7 @@ end
 
 
 addButton("Kill", ";kill")
+addButton("jumpscare", ";jumps")
 addButton("mute", ";mute")
 addButton("unmute", ";unmute")
 addButton("jaill", ";jaill")
