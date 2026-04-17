@@ -1346,50 +1346,92 @@ end
 
 main2Tab:Section("Cmds | Sem chat")
 
-local function addButton(name, cmd)
-	main2Tab:Button(name, nil, function(btn)
-		if name == "Verificar Users" then
-			if not RPNText then
-				btn.Text = "Not Brookhaven"
-				return
-			end
-			local args = {[1] = "RolePlayName", [2] = "v"}
-			RPNText:FireServer(unpack(args))
-			local original = btn.Text
-			btn.Text = "0"
-			task.delay(1, function()
-				btn.Text = original
-			end)
-		else
-			SilentCmd(cmd, btn)
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RE = ReplicatedStorage:FindFirstChild("RE")
+local RPNText = RE and RE:FindFirstChild("1RPNam1eTex1t")
+
+local razao = ""
+
+main2Tab:Textbox("reason","motivo",nil,function(v)
+	razao = v or ""
+end)
+
+local function SilentCmd(cmd, usarRazao, btn)
+	if not RPNText then
+		if btn then
+			btn.Text = "Not Brookhaven"
 		end
+		return
+	end
+
+	if not alvo or alvo == "" then return end
+
+	local plr = findPlayer(alvo)
+	if not plr then return end
+
+	local short = string.sub(plr.Name,1,4)
+	local texto = cmd.." "..short
+
+	if usarRazao and razao ~= "" then
+		texto = texto.." "..razao
+	end
+
+	RPNText:FireServer("RolePlayName",texto)
+
+	task.delay(0.5,function()
+		RPNText:FireServer("RolePlayName",";c")
+	end)
+
+	if btn then
+		local old = btn.Text
+		btn.Text = "0"
+
+		task.delay(1,function()
+			if btn then
+				btn.Text = old
+			end
+		end)
+	end
+end
+
+local function addButton(nome,cmd)
+	main2Tab:Button(nome,nil,function(btn)
+		SilentCmd(cmd,false,btn)
 	end)
 end
 
+local function addButtonR(nome,cmd)
+	main2Tab:Button(nome,nil,function(btn)
+		SilentCmd(cmd,true,btn)
+	end)
+end
 
 addButton("Kill", ";kill")
-addButton("jumpscare", ";jumps")
-addButton("mute", ";mute")
-addButton("unmute", ";unmute")
-addButton("jaill", ";jaill")
-addButton("unjaill", ";unjaill")
-addButton("float", ";float")
-addButton("unfloat", ";unfloat")
-addButton("say (alvo) (msg)", ";say")
-addButton("Kick (sem motivo)", ";kick")
+addButton("Jumpscare", ";jumps")
+addButton("Mute", ";mute")
+addButton("Unmute", ";unmute")
+addButton("Jail", ";jail")
+addButton("Unjail", ";unjail")
+addButton("Float", ";float")
+addButton("Unfloat", ";unfloat")
+
+addButtonR("Say (alvo) (msg)", ";say")
+addButtonR("Kick (alvo) (motivo)", ";kick")
+
 addButton("Bring", ";bring")
 addButton("Fling", ";fling")
-addButton("crash", ";crash")
-addButton("mimic", ";mimic")
-addButton("unmimic", ";mimic")
-addButton("sit", ";sit")
-addButton("blind", ";blind")
-addButton("unblind", ";unblind")
-addButton("void", ";void")
+addButton("Crash", ";crash")
+addButton("Mimic", ";mimic")
+addButton("Unmimic", ";unmimic")
+addButton("Sit", ";sit")
+addButton("Blind", ";blind")
+addButton("Unblind", ";unblind")
+addButton("Void", ";void")
 addButton("Ban [perm]", ";ban")
 addButton("Freeze", ";freeze")
 addButton("Unfreeze", ";unfreeze")
 addButton("Unfly (beta)", ";unfly")
+
 
 local b2Tab=Lib:Tab("> localP")
 
