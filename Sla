@@ -852,39 +852,6 @@ end
 
 end)
 
-local cm2Tab=Lib:Tab("> cmds")
-
-cm2Tab:Section("-cmds com motivo-")
-
-cm2Tab:Section("kick (alvo) (motivo) ")
-
-cm2Tab:Section("say (alvo) (Sla 67) ")
-
-cm2Tab:Section("-Cmd Sem motivo-")
-
-cm2Tab:Section("jaill")
-
-cm2Tab:Section("float")
-
-cm2Tab:Section("Fling")
-
-cm2Tab:Section("Kill")
-
-cm2Tab:Section("bring")
-
-cm2Tab:Section("blind")
-
-cm2Tab:Section("freeze")
-
-cm2Tab:Section("ban")
-
-cm2Tab:Section("mimic")
-
-cm2Tab:Section("sit")
-
-cm2Tab:Section("void")
-
-cm2Tab:Section("unfly")
 
 local main2Tab=Lib:Tab("> Player")
 
@@ -1289,6 +1256,30 @@ main2Tab:Button("Unfly (beta)",nil,function()
     Title = "Painel Admin",
     Text = "fly foi desativado | isso esta em beta!!",
     Duration = 1,
+    Type = "Success"
+})
+	
+end)
+
+main2Tab:Button("tag (vc)",nil,function()
+	runCmd(";tag")
+	
+	Notify({
+    Title = "Painel Admin",
+    Text = "vc esta com sua tag",
+    Duration = 2,
+    Type = "Success"
+})
+	
+end)
+
+main2Tab:Button("untag (vc)",nil,function()
+	runCmd(";untag")
+	
+	Notify({
+    Title = "Painel Admin",
+    Text = "vc removeu sua tag",
+    Duration = 2,
     Type = "Success"
 })
 	
@@ -1755,3 +1746,6 @@ c2Tab:Toggle("Show fps",nil,function(v)
 	end
 end)
 
+local cm2Tab=Lib:Tab("> credits")
+
+cm2Tab:Section("- Ghost and Pack -")
