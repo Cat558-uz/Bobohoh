@@ -859,430 +859,137 @@ local Players = game:GetService("Players")
 local TextChatService = game:GetService("TextChatService")
 
 local alvo = ""
+local razao = ""
 
-local function sendChat(msg)
-	if TextChatService.ChatInputBarConfiguration and TextChatService.ChatInputBarConfiguration.TargetTextChannel then
-		TextChatService.ChatInputBarConfiguration.TargetTextChannel:SendAsync(msg)
-	end
+local function notify(titulo,texto,duracao,tipo)
+	Notify({
+		Title = titulo,
+		Text = texto,
+		Duration = duracao or 2,
+		Type = tipo or "Success"
+	})
 end
 
-local function findPlayer(str)
-	str = string.lower(str)
+local function findPlayer(txt)
+	txt = string.lower(txt)
 
-	for _,p in ipairs(Players:GetPlayers()) do
-		local name = string.lower(p.Name)
-		local display = string.lower(p.DisplayName)
-
-		if name:find(str,1,true) or display:find(str,1,true) then
-			return p
+	for _,plr in ipairs(Players:GetPlayers()) do
+		if string.find(string.lower(plr.Name),txt,1,true) or string.find(string.lower(plr.DisplayName),txt,1,true) then
+			return plr
 		end
 	end
 end
 
-main2Tab:Textbox("alvo","nome ou nikname",nil,function(v)
-	alvo = v
-end) 
+local function sendChat(msg)
+	local enviado = false
 
-local razao = ""
+	pcall(function()
+		local cfg = TextChatService.ChatInputBarConfiguration
+		if cfg and cfg.TargetTextChannel then
+			cfg.TargetTextChannel:SendAsync(msg)
+			enviado = true
+		end
+	end)
+
+	if enviado then return end
+
+	pcall(function()
+		local channels = TextChatService:FindFirstChild("TextChannels")
+		if channels then
+			local general = channels:FindFirstChild("RBXGeneral")
+			if general then
+				general:SendAsync(msg)
+			end
+		end
+	end)
+end
+
+local function getShortName()
+	if alvo == "" then return end
+
+	local plr = findPlayer(alvo)
+	if not plr then return end
+
+	return string.sub(plr.Name,1,4)
+end
+
+local function runCmd(cmd,useReason)
+	local short = getShortName()
+
+	if not short then
+		notify("Painel Admin","alvo não encontrado",2,"Warning")
+		return
+	end
+
+	local msg = cmd.." "..short
+
+	if useReason and razao ~= "" then
+		msg = msg.." "..razao
+	end
+
+	sendChat(msg)
+	notify("Painel Admin","comando enviado",1,"Success")
+end
+
+local function runSelf(cmd)
+	sendChat(cmd)
+	notify("Painel Admin","comando enviado",1,"Success")
+end
+
+main2Tab:Textbox("alvo","nome ou nickname",nil,function(v)
+	alvo = v
+end)
 
 main2Tab:Textbox("reason","motivo",nil,function(v)
 	razao = v
 end)
 
-local function runCmdR(cmd)
-	if alvo == "" then return end
-	
-	local plr = findPlayer(alvo)
-	if not plr then return end
-	
-	local short = string.sub(plr.Name,1,4)
-	local msg = cmd.." "..short
-	
-	if razao and razao ~= "" then
-		msg = msg.." "..razao
-	end
-	
-	sendChat(msg)
-end
-
-main2Tab:Section("outros")
-
-main2Tab:Button("Tp to player",nil,function()
-
-	local plr = findPlayer(alvo)
-	if not plr then return end
-
-	local char = plr.Character
-	local mychar = Players.LocalPlayer.Character
-
-	if char and char:FindFirstChild("HumanoidRootPart") and mychar and mychar:FindFirstChild("HumanoidRootPart") then
-		mychar.HumanoidRootPart.CFrame = char.HumanoidRootPart.CFrame * CFrame.new(0,0,3)
-	end
-
-	Notify({
-    Title = "painel Admin",
-    Text = "teleportado",
-    Duration = 1,
-    Type = "Success"
-})
-
-end)
-
-local Players = game:GetService("Players")
-local cam = workspace.CurrentCamera
-local viewing = false
-local viewCharCon
-local viewLeaveCon
-
-main2Tab:Toggle("View / Unview",nil,function(v)
-
-	local plr = findPlayer(alvo)
-	if not plr then return end
-
-	if viewCharCon then viewCharCon:Disconnect() viewCharCon = nil end
-	if viewLeaveCon then viewLeaveCon:Disconnect() viewLeaveCon = nil end
-
-	if v then
-		viewing = true
-
-		local function setView(char)
-			local hum = char:FindFirstChildOfClass("Humanoid")
-			if hum then
-				cam.CameraSubject = hum
-			end
-		end
-
-		if plr.Character then
-			setView(plr.Character)
-		end
-
-		viewCharCon = plr.CharacterAdded:Connect(function(char)
-			if viewing then
-				char:WaitForChild("Humanoid")
-				setView(char)
-			end
-		end)
-
-		viewLeaveCon = Players.PlayerRemoving:Connect(function(p)
-			if p == plr and viewing then
-				local mychar = Players.LocalPlayer.Character
-				if mychar and mychar:FindFirstChildOfClass("Humanoid") then
-					cam.CameraSubject = mychar.Humanoid
-				end
-				viewing = false
-				
-					Notify({
-    Title = "painel Admin",
-    Text = "Player saiu Ou Erro No view",
-    Duration = 3,
-    Type = "Warning"
-})
-			end
-		end)
-
-			Notify({
-    Title = "painel Admin",
-    Text = "Olhando...",
-    Duration = 1,
-    Type = "Success"
-})
-
-	else
-		local mychar = Players.LocalPlayer.Character
-		if mychar and mychar:FindFirstChildOfClass("Humanoid") then
-			cam.CameraSubject = mychar.Humanoid
-		end
-		viewing = false
-		Notify("View","Parou de observar")
-	end
-
-end)
- 
 main2Tab:Section("Cmds | Alvo")
 
 main2Tab:Button("Kick (motivo)",nil,function()
-	runCmdR(";kick")
+	runCmd(";kick",true)
 end)
 
 main2Tab:Button("Say (motivo)",nil,function()
-	runCmdR(";say")
+	runCmd(";say",true)
+end)
+
+main2Tab:Button("Ban",nil,function()
+	runCmd(";ban")
 end)
 
 main2Tab:Button("Kill",nil,function()
 	runCmd(";kill")
-	
-	Notify({
-    Title = "Painel Admin",
-    Text = "comando enviado",
-    Duration = 1,
-    Type = "Success"
-})
-	
-end)
-
-main2Tab:Button("jumpscare / kick",nil,function()
-	runCmd(";jumps")
-	
-	Notify({
-    Title = "Painel Admin",
-    Text = "comando enviado",
-    Duration = 1,
-    Type = "Success"
-})
-	
-end)
-
-main2Tab:Button("mute",nil,function()
-	runCmd(";mute")
-	
-		Notify({
-    Title = "Painel Admin",
-    Text = "chat ativado (alvo)",
-    Duration = 1,
-    Type = "Success"
-})
-	
-end)
-
-main2Tab:Button("unmute",nil,function()
-	runCmd(";unmute")
-	
-	Notify({
-    Title = "Painel Admin",
-    Text = "chat ativado (alvo)",
-    Duration = 1,
-    Type = "Success"
-})
-	
-end)
-
-main2Tab:Button("float",nil,function()
-	runCmd(";float")
-	
-		Notify({
-    Title = "Painel Admin",
-    Text = "comando enviado",
-    Duration = 1,
-    Type = "Success"
-})
-	
-end)
-
-main2Tab:Button("unfloat",nil,function()
-	runCmd(";unfloat")
-	
-	Notify({
-    Title = "Painel Admin",
-    Text = "comando enviado",
-    Duration = 1,
-    Type = "Success"
-})
-	
-end)
-
-main2Tab:Button("jaill",nil,function()
-	runCmd(";jaill")
-	
-		Notify({
-    Title = "Painel Admin",
-    Text = "Comando enviado",
-    Duration = 1,
-    Type = "Success"
-})
-	
-end)
-
-main2Tab:Button("unjaill",nil,function()
-	runCmd(";unjaill")
-	
-	Notify({
-    Title = "Painel Admin",
-    Text = "comando desativado",
-    Duration = 1,
-    Type = "Success"
-})
-	
-end)
-
-
-main2Tab:Button("void",nil,function()
-	runCmd(";void")
-	
-	Notify({
-    Title = "Painel Admin",
-    Text = "comando enviado",
-    Duration = 1,
-    Type = "Success"
-})
-	
 end)
 
 main2Tab:Button("Bring",nil,function()
 	runCmd(";bring")
-	
-	Notify({
-    Title = "Painel Admin",
-    Text = "comando enviado",
-    Duration = 1,
-    Type = "Success"
-})
-	
 end)
 
-main2Tab:Button("Fling",nil,function()
-	runCmd(";fling")
-	
-	Notify({
-    Title = "Painel Admin",
-    Text = "comando enviado",
-    Duration = 1,
-    Type = "Success"
-})
-	
+main2Tab:Button("Mute",nil,function()
+	runCmd(";mute")
 end)
 
-main2Tab:Button("Ban [ perm ]",nil,function()
-	runCmd(";ban")
-	
-	Notify({
-    Title = "Painel Admin",
-    Text = "comando enviado",
-    Duration = 1,
-    Type = "Success"
-})
-	
+main2Tab:Button("Unmute",nil,function()
+	runCmd(";unmute")
 end)
 
-main2Tab:Button("blind ",nil,function()
-	runCmd(";blind")
-	
-	Notify({
-    Title = "Painel Admin",
-    Text = "comando enviado",
-    Duration = 1,
-    Type = "Success"
-})
-	
-end)
-
-main2Tab:Button("unblind ",nil,function()
-	runCmd(";unblind")
-	
-	Notify({
-    Title = "Painel Admin",
-    Text = "comando desativado",
-    Duration = 1,
-    Type = "Success"
-})
-	
-end)
-
-main2Tab:Button("sit ",nil,function()
+main2Tab:Button("Sit",nil,function()
 	runCmd(";sit")
-	
-	Notify({
-    Title = "Painel Admin",
-    Text = "comando enviado ",
-    Duration = 1,
-    Type = "Success"
-})
-	
 end)
 
-main2Tab:Button("mimic ( controll )",nil,function()
-	runCmd(";mimic")
-	
-	Notify({
-    Title = "recomendo",
-    Text = "use view no alvo pra ficar melhor",
-    Duration = 5,
-    Type = "Success"
-})
-	
-end)
-
-main2Tab:Button("unmimic ( controll )",nil,function()
-	runCmd(";unmimic")
-	
-	Notify({
-    Title = "Painel Admin",
-    Text = "comando desativado",
-    Duration = 1,
-    Type = "Success"
-})
-	
-end)
-
-main2Tab:Button("Freeze",nil,function()
-	runCmd(";freeze")
-	
-	Notify({
-    Title = "Painel Admin",
-    Text = "comando enviado",
-    Duration = 1,
-    Type = "Success"
-})
-	
-end)
-
-main2Tab:Button("Unfreeze",nil,function()
-	runCmd(";unfreeze")
-	
-	Notify({
-    Title = "Painel Admin",
-    Text = "comando desativado",
-    Duration = 1,
-    Type = "Success"
-})
-	
-end)
-
-main2Tab:Button("crash",nil,function()
-	runCmd(";crash")
-	
-	Notify({
-    Title = "Painel Admin",
-    Text = "alvo crashado ",
-    Duration = 1,
-    Type = "Success"
-})
-	
-end)
-
-main2Tab:Button("Unfly (beta)",nil,function()
+main2Tab:Button("Unfly",nil,function()
 	runCmd(";unfly")
-	
-	Notify({
-    Title = "Painel Admin",
-    Text = "fly foi desativado | isso esta em beta!!",
-    Duration = 1,
-    Type = "Success"
-})
-	
 end)
 
-main2Tab:Button("tag (vc)",nil,function()
-	runCmd(";tag")
-	
-	Notify({
-    Title = "Painel Admin",
-    Text = "vc esta com sua tag",
-    Duration = 2,
-    Type = "Success"
-})
-	
+main2Tab:Section("Cmds | Você")
+
+main2Tab:Button("Tag",nil,function()
+	runSelf(";tag")
 end)
 
-main2Tab:Button("untag (vc)",nil,function()
-	runCmd(";untag")
-	
-	Notify({
-    Title = "Painel Admin",
-    Text = "vc removeu sua tag",
-    Duration = 2,
-    Type = "Success"
-})
-	
+main2Tab:Button("Untag",nil,function()
+	runSelf(";untag")
 end)
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
