@@ -944,6 +944,64 @@ main2Tab:Textbox("reason","motivo",nil,function(v)
 	razao = v
 end)
 
+main2Tab:Section("Basic")
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local viewCon
+local tpCon
+
+main2Tab:Toggle("View Target", nil, function(v)
+    if viewCon then
+        viewCon:Disconnect()
+        viewCon = nil
+    end
+
+    local camera = workspace.CurrentCamera
+    local localPlayer = Players.LocalPlayer
+
+    if not v then
+        if localPlayer.Character and localPlayer.Character:FindFirstChildOfClass("Humanoid") then
+            camera.CameraSubject = localPlayer.Character:FindFirstChildOfClass("Humanoid")
+        end
+        return
+    end
+
+    viewCon = RunService.RenderStepped:Connect(function()
+        local plr = findPlayer(alvo)
+        if not plr then return end
+        if not plr.Character then return end
+
+        local hum = plr.Character:FindFirstChildOfClass("Humanoid")
+        if hum then
+            camera.CameraSubject = hum
+        end
+    end)
+end)
+
+main2Tab:Button("Tp To Target", nil, function()
+    local localPlayer = Players.LocalPlayer
+    local target = findPlayer(alvo)
+
+    if not target then
+        notify("Painel Admin", "alvo não encontrado", 2, "Warning")
+        return
+    end
+
+    if not target.Character or not localPlayer.Character then
+        return
+    end
+
+    local myRoot = localPlayer.Character:FindFirstChild("HumanoidRootPart")
+    local tgRoot = target.Character:FindFirstChild("HumanoidRootPart")
+
+    if myRoot and tgRoot then
+        myRoot.CFrame = tgRoot.CFrame * CFrame.new(0, 0, 3)
+        notify("Painel Admin", "teleportado", 1, "Success")
+    end
+end)
+
 main2Tab:Section("Cmds | Alvo")
 
 main2Tab:Button("Kick (motivo)",nil,function()
@@ -1451,6 +1509,23 @@ c2Tab:Toggle("Show fps",nil,function(v)
 		fpsLabel:Destroy()
 		fpsLabel = nil
 	end
+end)
+
+c2Tab:Section("visual")
+
+c2Tab:Button("visuais admin",nil,function()
+	
+	Notify({
+    Title = "Painel",
+    Text = "carregando jaill tag etc",
+    Duration = 3,
+    Type = "Info"
+})
+
+loadstring(game:HttpGet("https://raw.githubusercontent.com/Cat558-uz/CmdY/refs/heads/main/Fu5kSkiders"))()
+
+
+	
 end)
 
 local cm2Tab=Lib:Tab("> credits")
