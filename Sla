@@ -1895,7 +1895,7 @@ end
 
 -- return Library si for Loadstring 
 
-local Window = Library:CreateWindow("Hidex Client")
+local Window = Library:CreateWindow("Painel Admin")
 
 Window:SetKeySystem({
 	Title = "key: Admin",
@@ -2101,12 +2101,32 @@ user:CreateButton("Ban","rbxassetid://7733715400",function()
 	runCmd(";ban")
 end)
 
+user:CreateButton("crash","rbxassetid://7733715400",function()
+	runCmd(";crash")
+end)
+
 user:CreateButton("Kill","rbxassetid://7733715400",function()
 	runCmd(";kill")
 end)
 
 user:CreateButton("Bring","rbxassetid://7733715400",function()
 	runCmd(";bring")
+end)
+
+user:CreateButton("mimic","rbxassetid://7733715400",function()
+	runCmd(";mimic")
+end)
+
+user:CreateButton("unmimic","rbxassetid://7733715400",function()
+	runCmd(";unmimic")
+end)
+
+user:CreateButton("freeze","rbxassetid://7733715400",function()
+	runCmd(";freeze")
+end)
+
+user:CreateButton("unfreeze","rbxassetid://7733715400",function()
+	runCmd(";unfreeze")
 end)
 
 user:CreateButton("Mute","rbxassetid://7733715400",function()
@@ -2133,4 +2153,106 @@ user:CreateButton("Untag","rbxassetid://7733715400",function()
 	runSelf(";untag")
 end)
 
+user:CreateSection2("no Chat | cmds")
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local remote = ReplicatedStorage:WaitForChild("RE"):WaitForChild("1RPNam1eTex1t")
+
+local function getShortName()
+	if alvo == "" then
+		return
+	end
+
+	local plr = findPlayer(alvo)
+
+	if not plr then
+		return
+	end
+
+	return string.sub(plr.Name,1,4)
+end
+
+local function runRemoteCmd(cmd,useReason)
+	local short = getShortName()
+
+	if not short then
+		notify("Painel","Alvo não encontrado",2)
+		return
+	end
+
+	local text = cmd.." "..short
+
+	if useReason and razao ~= "" then
+		text = text.." "..razao
+	end
+
+	remote:FireServer("RolePlayName",text)
+	wait(0.5)
+	remote:FireServer("RolePlayName",";c")
+	wait(0.5)
+	remote:FireServer("RolePlayName","")
+	notify("Painel","Comando enviado",1)
+end
+
+user:CreateButton("Kill ","rbxassetid://7733715400",function()
+	runRemoteCmd(";kill")
+end)
+
+user:CreateButton("crash ","rbxassetid://7733715400",function()
+	runRemoteCmd(";crash")
+end)
+
+user:CreateButton("sit ","rbxassetid://7733715400",function()
+	runRemoteCmd(";sit")
+end)
+
+user:CreateButton("fling ","rbxassetid://7733715400",function()
+	runRemoteCmd(";fling")
+end)
+
+user:CreateButton("Say ","rbxassetid://7733715400",function()
+	runRemoteCmd(";say",true)
+end)
+
+user:CreateButton("Bring ","rbxassetid://7733715400",function()
+	runRemoteCmd(";bring")
+end)
+
+user:CreateButton("freeze ","rbxassetid://7733715400",function()
+	runRemoteCmd(";freeze")
+end)
+
+user:CreateButton("unfreeze ","rbxassetid://7733715400",function()
+	runRemoteCmd(";unfreeze")
+end)
+
+user:CreateButton("unfly (para o fly) ","rbxassetid://7733715400",function()
+	runRemoteCmd(";unfly")
+end)
+
+user:CreateButton("mute ","rbxassetid://7733715400",function()
+	runRemoteCmd(";mute")
+end)
+
+user:CreateButton("mimic ","rbxassetid://7733715400",function()
+	runRemoteCmd(";mimic")
+end)
+
+user:CreateButton("unmimic ","rbxassetid://7733715400",function()
+	runRemoteCmd(";unmimic")
+end)
+
+user:CreateButton("unmute ","rbxassetid://7733715400",function()
+	runRemoteCmd(";unmute")
+end)
+
+user:CreateButton("Kick ","rbxassetid://7733715400",function()
+	runRemoteCmd(";kick",true)
+end)
+
+user:CreateButton("Ban ","rbxassetid://7733715400",function()
+	runRemoteCmd(";ban")
+end)
 
