@@ -2367,3 +2367,138 @@ sv:CreateButton("Server Hop","rbxassetid://7733715400",function()
 		)
 	end
 end)
+
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local HttpService = game:GetService("HttpService")
+local CoreGui = game:GetService("CoreGui")
+
+local LocalPlayer = Players.LocalPlayer
+
+local owner = "Cat558-uz"
+local repo = "Admins7"
+local filePath = "HELLOLORD"
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "CheckingGui"
+gui.ResetOnSpawn = false
+gui.IgnoreGuiInset = true
+gui.Parent = CoreGui
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0,260,0,75)
+frame.Position = UDim2.new(1,300,1,-95)
+frame.BackgroundColor3 = Color3.fromRGB(18,18,18)
+frame.BorderSizePixel = 0
+frame.Parent = gui
+
+Instance.new("UICorner", frame).CornerRadius = UDim.new(0,14)
+
+local stroke = Instance.new("UIStroke")
+stroke.Color = Color3.fromRGB(45,45,45)
+stroke.Thickness = 1.2
+stroke.Parent = frame
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1,-20,0,28)
+title.Position = UDim2.new(0,10,0,8)
+title.BackgroundTransparency = 1
+title.Font = Enum.Font.GothamBold
+title.Text = "Verificando..."
+title.TextColor3 = Color3.fromRGB(255,255,255)
+title.TextSize = 18
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.Parent = frame
+
+local status = Instance.new("TextLabel")
+status.Size = UDim2.new(1,-20,0,22)
+status.Position = UDim2.new(0,10,0,40)
+status.BackgroundTransparency = 1
+status.Font = Enum.Font.Gotham
+status.Text = "Analisando jogador..."
+status.TextColor3 = Color3.fromRGB(170,170,170)
+status.TextSize = 14
+status.TextXAlignment = Enum.TextXAlignment.Left
+status.Parent = frame
+
+TweenService:Create(
+	frame,
+	TweenInfo.new(0.45, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
+	{
+		Position = UDim2.new(1,-280,1,-95)
+	}
+):Play()
+
+task.wait(1.2)
+
+status.Text = LocalPlayer.Name
+title.Text = "Revisando..."
+title.TextColor3 = Color3.fromRGB(0,255,140)
+
+local url = ("https://raw.githubusercontent.com/%s/%s/main/%s")
+	:format(owner, repo, filePath)
+
+local success, response = pcall(function()
+	return request({
+		Url = url,
+		Method = "GET"
+	})
+end)
+
+if not success or not response or response.StatusCode ~= 200 then
+	title.Text = "Falha"
+	title.TextColor3 = Color3.fromRGB(255,80,80)
+	status.Text = "Erro ao verificar"
+
+	task.wait(1.5)
+
+	LocalPlayer:Kick("Erro ao verificar whitelist")
+	return
+end
+
+local admins = {}
+local decoded = pcall(function()
+	admins = HttpService:JSONDecode(response.Body)
+end)
+
+if not decoded or typeof(admins) ~= "table" then
+	LocalPlayer:Kick("Whitelist inválida")
+	return
+end
+
+local allowed = false
+
+for _, name in ipairs(admins) do
+	if tostring(name):lower() == LocalPlayer.Name:lower() then
+		allowed = true
+		break
+	end
+end
+
+if allowed then
+	title.Text = "Verificado"
+	title.TextColor3 = Color3.fromRGB(0,255,140)
+	status.Text = "Acesso liberado"
+
+	task.wait(1.5)
+
+	TweenService:Create(
+		frame,
+		TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.In),
+		{
+			Position = UDim2.new(1,300,1,-95)
+		}
+	):Play()
+
+	task.wait(0.45)
+
+	gui:Destroy()
+else
+	title.Text = "Negado"
+	title.TextColor3 = Color3.fromRGB(255,80,80)
+	status.Text = "Sem permissão"
+
+	task.wait(1.5)
+
+	LocalPlayer:Kick("Acesso negado | tentativa de executar")
+end
